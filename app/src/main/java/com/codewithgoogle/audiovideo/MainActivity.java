@@ -15,7 +15,10 @@ import android.widget.Switch;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-public class MainActivity extends AppCompatActivity implements  View.OnClickListener, SeekBar.OnSeekBarChangeListener {
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class MainActivity extends AppCompatActivity implements  View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnCompletionListener {
 
     private Button btn, playbtn, pausebtn;
     private VideoView vw;
@@ -23,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
     private MediaPlayer mediaPlayer;
     private SeekBar seekbar, movebackforth;
     private AudioManager audioManager;
+    private Timer timer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +70,8 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
         });
 
         movebackforth.setOnSeekBarChangeListener(this);
+        movebackforth.setMax(mediaPlayer.getDuration());
+        mediaPlayer.setOnCompletionListener(this);
     }
 
     @Override
@@ -87,9 +93,17 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
                 break;
             case R.id.startmusic:
                 mediaPlayer.start();
+                timer=new Timer();
+                timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                    movebackforth.setProgress(mediaPlayer.getCurrentPosition());
+                    }
+                }, 0,1000);
                 break;
             case R.id.stopButton:
                 mediaPlayer.pause();
+                timer.cancel();
                 break;
         }
     }
@@ -97,17 +111,24 @@ public class MainActivity extends AppCompatActivity implements  View.OnClickList
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         if(fromUser){
-            Toast.makeText(this,"The progress is : "+progress, Toast.LENGTH_SHORT).show();
+           // Toast.makeText(this,"The progress is : "+progress, Toast.LENGTH_SHORT).show();
+        mediaPlayer.seekTo(progress);
         }
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
-
+            mediaPlayer.pause();
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
+            mediaPlayer.start();
+    }
 
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        timer.cancel();
+        Toast.makeText(this, "The music is ended",Toast.LENGTH_SHORT).show();
     }
 }
